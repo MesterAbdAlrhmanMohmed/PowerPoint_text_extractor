@@ -3,19 +3,37 @@ from PyQt6 import QtGui as qt1
 from PyQt6 import QtCore as qt2
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtCore import Qt
+from mtranslate import translate
 from pptx import Presentation
-import about,winsound,pyperclip,user_guide
+import about,winsound,pyperclip,user_guide,dic
+class TranslationThread(qt2 .QThread):
+    line_translated=qt2.pyqtSignal(int, str)
+    error_occurred=qt2.pyqtSignal(str)
+    def __init__(self,lines,language_code):
+        super().__init__()
+        self.lines=lines
+        self.language_code=language_code
+    def run(self):
+        try:
+            for index,line in enumerate(self.lines):
+                if line.strip():
+                    translated_line=translate(line, self.language_code, 'auto')
+                    self.line_translated.emit(index, translated_line)
+                else:
+                    self.line_translated.emit(index, "")
+        except Exception as e:
+            self.error_occurred.emit(f"حدث خطأ أثناء الترجمة: {e}")
 class PowerPointTextExtractor(qt.QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("PowerPoint Text Extractor")
+        self.resize(1000,500)
         qt1.QShortcut("ctrl+=", self).activated.connect(self.increase_font_size)
         qt1.QShortcut("ctrl+-", self).activated.connect(self.decrease_font_size)
         qt1.QShortcut("ctrl+c", self).activated.connect(self.copy_line)
         qt1.QShortcut("ctrl+a", self).activated.connect(self.copy_text)
         qt1.QShortcut("ctrl+p", self).activated.connect(self.print_text)
-        qt1.QShortcut("ctrl+s", self).activated.connect(self.save_text_as_txt)
-        self.setWindowTitle("PowerPoint Text Extractor")
-        self.resize(1000,500)
+        qt1.QShortcut("ctrl+s", self).activated.connect(self.save_text_as_txt)        
         self.choose_file_btn=qt.QPushButton("إختيار ملف PowerPoint")
         self.choose_file_btn.setDefault(True)
         self.choose_file_btn.clicked.connect(self.choose_PowerPoint_file)
@@ -25,7 +43,15 @@ class PowerPointTextExtractor(qt.QMainWindow):
         self.file_path.setReadOnly(True)
         self.start_extraction_btn=qt.QPushButton("بدء استخراج النص")
         self.start_extraction_btn.setDefault(True)
-        self.start_extraction_btn.clicked.connect(self.extract_text)
+        self.start_extraction_btn.clicked.connect(self.extract_text)        
+        self.ShowLanguages=qt.QLabel("قم بتحديد لغة للترجمة")        
+        self.Languages=qt.QComboBox()
+        self.Languages.setAccessibleName("قم بتحديد لغة للترجمة")
+        self.Languages.addItems(dic.languages.keys())            
+        self.translation=qt.QPushButton("ترجمة النص المستخرج")
+        self.translation.setDefault(True)
+        self.translation.clicked.connect(self.translate_text_threaded)
+        self.translation.setShortcut("ctrl+t")
         self.text_edit=qt.QTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setTextInteractionFlags(
@@ -47,6 +73,8 @@ class PowerPointTextExtractor(qt.QMainWindow):
         layout.addWidget(self.show_path_label)
         layout.addWidget(self.file_path)
         layout.addWidget(self.start_extraction_btn)
+        layout.addWidget(self.Languages)
+        layout.addWidget(self.translation)
         layout.addWidget(self.text_edit)
         layout.addWidget(self.about_btn)        
         layout.addWidget(self.UserGuide)
@@ -55,6 +83,8 @@ class PowerPointTextExtractor(qt.QMainWindow):
         self.setCentralWidget(container)
     def guide(self):
         user_guide.dialog(self).exec()
+    def about(self):
+        about.dialog(self).exec()
     def choose_PowerPoint_file(self):
         file_dialog=qt.QFileDialog()
         file_name, _ = file_dialog.getOpenFileName(self, "اختر ملف PowerPoint", "", "PowerPoint Files (*.pptx)")
@@ -72,8 +102,32 @@ class PowerPointTextExtractor(qt.QMainWindow):
             self.text_edit.setFocus()
         except Exception as error:
             qt.QMessageBox.critical(self, "خطأ في استخراج النص", str(error))
-    def about(self):
-        about.dialog(self).exec()
+    def translate_text_threaded(self):
+        try:
+            language_code=dic.languages[self.Languages.currentText()]
+            self.lines=self.text_edit.toPlainText().splitlines()
+            if not self.lines:
+                qt.QMessageBox.critical(self, "تنبيه", "لا يوجد نص للترجمة")
+                return            
+            self.translation_thread=TranslationThread(self.lines,language_code)
+            self.translation_thread.line_translated.connect(self.update_line_translation)
+            self.translation_thread.error_occurred.connect(self.show_error)
+            self.translation_thread.start()
+        except Exception as e:
+            print(e)
+            qt.QMessageBox.critical(self, "تنبيه", "حدث خطأ أثناء الترجمة")
+    def update_line_translation(self, index,translated_line):
+        cursor=self.text_edit.textCursor()
+        cursor.movePosition(qt1.QTextCursor.MoveOperation.Start)
+        for _ in range(index):
+            cursor.movePosition(qt1.QTextCursor.MoveOperation.Down)
+        cursor.select(qt1.QTextCursor.SelectionType.LineUnderCursor)
+        cursor.removeSelectedText()
+        cursor.insertText(translated_line)
+    def update_translation(self,translated_text):
+        self.text_edit.setText(translated_text)
+    def show_error(self,error_message):
+        qt.QMessageBox.critical(self, "خطأ", error_message)
     def increase_font_size(self):
         self.font_size += 1
         self.update_font_size()
