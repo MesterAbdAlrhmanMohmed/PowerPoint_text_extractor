@@ -73,6 +73,7 @@ class PowerPointTextExtractor(qt.QMainWindow):
         layout.addWidget(self.show_path_label)
         layout.addWidget(self.file_path)
         layout.addWidget(self.start_extraction_btn)
+        layout.addWidget(self.ShowLanguages)
         layout.addWidget(self.Languages)
         layout.addWidget(self.translation)
         layout.addWidget(self.text_edit)
