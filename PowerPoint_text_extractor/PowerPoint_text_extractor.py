@@ -1,8 +1,8 @@
 from PyQt6 import QtWidgets as qt
 from PyQt6 import QtGui as qt1
 from PyQt6 import QtCore as qt2
-from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt6.QtCore import Qt
+from PyQt6.QtPrintSupport import QPrinter,QPrintDialog
 from mtranslate import translate
 from pptx import Presentation
 import about,winsound,pyperclip,user_guide,dic
@@ -33,7 +33,7 @@ class PowerPointTextExtractor(qt.QMainWindow):
         qt1.QShortcut("ctrl+c", self).activated.connect(self.copy_line)
         qt1.QShortcut("ctrl+a", self).activated.connect(self.copy_text)
         qt1.QShortcut("ctrl+p", self).activated.connect(self.print_text)
-        qt1.QShortcut("ctrl+s", self).activated.connect(self.save_text_as_txt)        
+        qt1.QShortcut("ctrl+s", self).activated.connect(self.save_text_as_txt)
         self.choose_file_btn=qt.QPushButton("إختيار ملف PowerPoint")
         self.choose_file_btn.setDefault(True)
         self.choose_file_btn.clicked.connect(self.choose_PowerPoint_file)
@@ -55,7 +55,8 @@ class PowerPointTextExtractor(qt.QMainWindow):
         self.text_edit=qt.QTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setTextInteractionFlags(
-        Qt.TextInteractionFlag.TextSelectableByKeyboard | Qt.TextInteractionFlag.TextSelectableByMouse)
+        Qt.TextInteractionFlag.TextSelectableByKeyboard|
+        Qt.TextInteractionFlag.TextSelectableByMouse)
         self.text_edit.setLineWrapMode(qt.QTextEdit.LineWrapMode.NoWrap)
         self.text_edit.setAccessibleName("النص المستخرج")
         self.about_btn=qt.QPushButton("عن المطور")
