@@ -27,7 +27,7 @@ class PowerPointTextExtractor(qt.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PowerPoint Text Extractor")
-        self.resize(1000,500)
+        self.setGeometry(200,70,800,600)
         qt1.QShortcut("ctrl+=", self).activated.connect(self.increase_font_size)
         qt1.QShortcut("ctrl+-", self).activated.connect(self.decrease_font_size)
         qt1.QShortcut("ctrl+c", self).activated.connect(self.copy_line)
