@@ -6,8 +6,8 @@ from PyQt6.QtPrintSupport import QPrinter,QPrintDialog
 from mtranslate import translate
 from pptx import Presentation
 import about,winsound,pyperclip,user_guide,dic
-class TranslationThread(qt2 .QThread):
-    line_translated=qt2.pyqtSignal(int, str)
+class TranslationThread(qt2.QThread):
+    line_translated=qt2.pyqtSignal(int,str)
     error_occurred=qt2.pyqtSignal(str)
     def __init__(self,lines,language_code):
         super().__init__()
@@ -96,10 +96,21 @@ class PowerPointTextExtractor(qt.QMainWindow):
         try:
             ppt=Presentation(self.file_path.text())
             extracted_text=""
-            for slide in ppt.slides:
+            for slide_num, slide in enumerate(ppt.slides, start=1):
+                extracted_text += f"Slide {slide_num}:\n"            
                 for shape in slide.shapes:
                     if hasattr(shape, "text"):
-                        extracted_text += shape.text + "\n"
+                        extracted_text += shape.text + "\n"                                
+                    if shape.has_table:
+                        table=shape.table
+                        extracted_text += "\nجدول:\n"
+                        for row in table.rows:
+                            row_text="\t".join([cell.text for cell in row.cells])
+                            extracted_text += row_text + "\n"            
+                if slide.has_notes_slide:
+                    notes=slide.notes_slide.notes_text_frame.text
+                    extracted_text += "\nملاحظات الشريحة:\n" + notes + "\n"                        
+                extracted_text += "-" * 50 + "\n"        
             self.text_edit.setText(extracted_text)
             self.text_edit.setFocus()
         except Exception as error:
