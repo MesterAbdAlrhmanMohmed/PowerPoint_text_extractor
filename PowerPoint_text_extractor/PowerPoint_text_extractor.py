@@ -96,21 +96,25 @@ class PowerPointTextExtractor(qt.QMainWindow):
         try:
             ppt=Presentation(self.file_path.text())
             extracted_text=""
-            for slide_num, slide in enumerate(ppt.slides, start=1):
-                extracted_text += f"Slide {slide_num}:\n"            
+            for slide_num, slide in enumerate(ppt.slides,start=1):
+                extracted_text+=f"Slide {slide_num}:\n"                        
                 for shape in slide.shapes:
                     if hasattr(shape, "text"):
                         extracted_text += shape.text + "\n"                                
                     if shape.has_table:
                         table=shape.table
-                        extracted_text += "\nجدول:\n"
+                        extracted_text += "جدول:\n"
                         for row in table.rows:
                             row_text="\t".join([cell.text for cell in row.cells])
-                            extracted_text += row_text + "\n"            
+                            extracted_text += row_text + "\n"                        
                 if slide.has_notes_slide:
-                    notes=slide.notes_slide.notes_text_frame.text
-                    extracted_text += "\nملاحظات الشريحة:\n" + notes + "\n"                        
-                extracted_text += "-" * 50 + "\n"        
+                    notes=slide.notes_slide.notes_text_frame.text.strip()
+                    if notes:
+                        extracted_text += "ملاحظات الشريحة:\n" + notes + "\n"
+                    else:
+                        extracted_text+="لا توجد ملاحظات لهذه الشريحة\n"
+                else:
+                    extracted_text += "لا توجد ملاحظات لهذه الشريحة\n"                
             self.text_edit.setText(extracted_text)
             self.text_edit.setFocus()
         except Exception as error:
