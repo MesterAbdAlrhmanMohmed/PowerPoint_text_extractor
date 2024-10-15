@@ -26,7 +26,7 @@ class TranslationThread(qt2.QThread):
 class PowerPointTextExtractor(qt.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PowerPoint Text Extractor")
+        self.setWindowTitle("PowerPoint text extractor")
         self.setGeometry(200,70,800,600)
         qt1.QShortcut("ctrl+=", self).activated.connect(self.increase_font_size)
         qt1.QShortcut("ctrl+-", self).activated.connect(self.decrease_font_size)
